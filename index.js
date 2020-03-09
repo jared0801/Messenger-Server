@@ -1,7 +1,7 @@
 const express = require('express');
 const socketio = require('socket.io');
 const http = require('http');
-const { addUser, removeUser, getUser, getUsersInRoom } = require('./users');
+const { addUser, removeUser, getUser, isUserAvailable, getUsersInRoom, getRooms } = require('./users');
 
 const PORT = process.env.PORT || 5000;
 
@@ -12,13 +12,25 @@ const server = http.createServer(app);
 const io = socketio(server);
 
 io.on('connection', (socket) => {
+    socket.emit('getRooms', getRooms());
+
+    socket.on('checkUser', ({ name, room }, callback) => {
+        if(isUserAvailable(name, room)) {
+            callback(true);
+        } else {
+            callback(false);
+        }
+    });
 
     socket.on('join', ({ name, room }, callback) => {
+
         const { error, user } = addUser({ id: socket.id, name, room });
         if(error) {
             console.log('error:', error);
             return callback(error);
         }
+        console.log(name, "has joined");
+        socket.broadcast.emit('getRooms', getRooms());
 
         socket.emit('message', { user: 'admin', text: `${user.name} welcome to the room ${user.room}` });
         socket.broadcast.to(user.room).emit('message', { user: 'admin', text: `${user.name} has joined!`});
@@ -41,6 +53,7 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         const user = removeUser(socket.id);
         if(user) {
+            socket.broadcast.emit('getRooms', getRooms());
             io.to(user.room).emit('message', { user: 'admin', text: `${user.name} has left.`});
         }
     });
