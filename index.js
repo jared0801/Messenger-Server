@@ -32,8 +32,8 @@ io.on('connection', (socket) => {
         console.log(name, "has joined");
         socket.broadcast.emit('getRooms', getRooms());
 
-        socket.emit('message', { user: 'admin', text: `${user.name} welcome to the room ${user.room}` });
-        socket.broadcast.to(user.room).emit('message', { user: 'admin', text: `${user.name} has joined!`});
+        socket.emit('message', { user: 'admin', text: `${user.name} welcome to the room ${user.room}`, datetime: new Date() });
+        socket.broadcast.to(user.room).emit('message', { user: 'admin', text: `${user.name} has joined!`, datetime: new Date() });
 
         socket.join(user.room);
 
@@ -44,7 +44,7 @@ io.on('connection', (socket) => {
 
     socket.on('sendMessage', (message, callback) => {
         const user = getUser(socket.id);
-        io.to(user.room).emit('message', { user: user.name, text: message });
+        io.to(user.room).emit('message', { user: user.name, text: message, datetime: new Date() });
         io.to(user.room).emit('roomData', { room: user.room, users: getUsersInRoom(user.room) });
 
         callback();
@@ -54,7 +54,7 @@ io.on('connection', (socket) => {
         const user = removeUser(socket.id);
         if(user) {
             socket.broadcast.emit('getRooms', getRooms());
-            io.to(user.room).emit('message', { user: 'admin', text: `${user.name} has left.`});
+            io.to(user.room).emit('message', { user: 'admin', text: `${user.name} has left.`, datetime: new Date() });
         }
     });
 });
