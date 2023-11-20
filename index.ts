@@ -1,15 +1,23 @@
-const express = require('express');
-const socketio = require('socket.io');
-const http = require('http');
+import express, { Express, Request, Response , Application } from 'express';
+import dotenv from 'dotenv';
+
+
+import { Server } from "socket.io";
+import http from 'http';
 const { addUser, removeUser, getUser, isUserAvailable, getUsersInRoom, getRooms } = require('./users');
-
-const PORT = process.env.PORT || 5000;
-
 const router = require('./router');
 
-const app = express();
+//For env File 
+dotenv.config();
+
+const app: Application = express();
+const port: Number = Number(process.env.PORT) || 5000;
 const server = http.createServer(app);
-const io = socketio(server);
+const io = new Server(server, {
+    cors: {
+        origin: '*'
+    }
+});
 
 io.on('connection', (socket) => {
     // Show currently available rooms
@@ -86,4 +94,4 @@ io.on('connection', (socket) => {
 
 app.use(router);
 
-server.listen(PORT, () => console.log(`Server has started on port ${PORT}.`));
+server.listen(port, () => console.log(`Server has started on port ${port}.`));
